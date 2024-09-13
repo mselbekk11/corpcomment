@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Container from './layout/Container';
 import Footer from './layout/Footer';
 import HashtagList from './hashtag/HashtagList';
 import { TFeedbackItem } from '../lib/types';
+import HashtagItem from './hashtag/HashtagItem';
 
 function App() {
   const [feedbackItems, setFeedbackItems] = useState<TFeedbackItem[]>([]);
@@ -10,16 +11,22 @@ function App() {
   const [errorMessage, setErrorMessage] = useState('');
   const [selectedCompany, setSelectedCompany] = useState('');
 
-  const filteredFeedbackItems = selectedCompany
-    ? feedbackItems.filter(
-        (feedbackItem) => feedbackItem.company === selectedCompany
-      )
-    : feedbackItems;
-
-  const companyList = feedbackItems
-    .map((item) => item.company)
-    .filter((company, index, array) => array.indexOf(company) === index);
-
+  const filteredFeedbackItems = useMemo(
+    () =>
+      selectedCompany
+        ? feedbackItems.filter(
+            (feedbackItem) => feedbackItem.company === selectedCompany
+          )
+        : feedbackItems,
+    [feedbackItems, selectedCompany]
+  );
+  const companyList = useMemo(
+    () =>
+      feedbackItems
+        .map((item) => item.company)
+        .filter((company, index, array) => array.indexOf(company) === index),
+    [feedbackItems]
+  );
   const handleAddToList = async (text: string) => {
     const companyName = text
       .split('')
@@ -49,11 +56,9 @@ function App() {
       }
     );
   };
-
   const handleSelectCompany = (company: string) => {
     setSelectedCompany(company);
   };
-
   useEffect(() => {
     const fetchFeedbackItems = async () => {
       setIsLoading(true);
@@ -88,7 +93,14 @@ function App() {
         feedbackItems={filteredFeedbackItems}
         handleAddToList={handleAddToList}
       />
-      <HashtagList companyList={companyList} handleSelectCompany={handleSelectCompany} />
+      <HashtagList>
+        {companyList.map((company) => (
+          <HashtagItem
+            company={company}
+            onSelectCompany={handleSelectCompany}
+          />
+        ))}
+      </HashtagList>
     </div>
   );
 }
